@@ -24,9 +24,6 @@ Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Comédie"
 
 Request : "Is there a historical film showing this weekend?"
 Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-20", "Historique"] }
-
-Request : "Capital of France?"
-Response : "Paris"
 `;
 
 // ---- DOM references ----
@@ -34,6 +31,37 @@ const messages = document.getElementById('messages');
 const form = document.getElementById('chatForm');
 const userInput = document.getElementById('userInput');
 const submitButton = document.getElementById('submitButton');
+
+// ---- Date and Time helpers ----
+const timeZone = 'Europe/Paris';
+const formatTime = (iso) =>
+  new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: timeZone }).format(new Date(iso));
+
+const hasTimes = (arr) => Array.isArray(arr) && arr.some((t) => t?.startsAt);
+
+const formatDate = (isoDate) =>
+  new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: timeZone }).format(
+    new Date(isoDate)
+  );
+
+const formatSlots = (data = []) =>
+  data
+    .map((item) => item?.startsAt)
+    .filter(Boolean)
+    .map(formatTime)
+    .sort((a, b) => a.localeCompare(b))
+    .join(', ');
+
+const getTodayApiFormat = () => {
+  const today = new Date();
+  const fullYear = today.getFullYear();
+  // For January it is 0
+  const month = today.getMonth() + 1;
+  const formatMonth = month > 9 ? month.toString() : '0' + month.toString();
+  const day = today.getDate();
+  const formatDay = day > 9 ? day.toString() : '0' + day.toString();
+  return `${fullYear}-${formatMonth}-${formatDay}`;
+};
 
 // ---- UI helpers ----
 const AVATARS = { user: '🧑‍💻', bot: '🤖' };
@@ -78,17 +106,6 @@ const UI = {
   },
 };
 
-const getTodayApiFormat = () => {
-  const today = new Date();
-  const fullYear = today.getFullYear();
-  // For January it is 0
-  const month = today.getMonth() + 1;
-  const formatMonth = month > 9 ? month.toString() : '0' + month.toString();
-  const day = today.getDate();
-  const formatDay = day > 9 ? day.toString() : '0' + day.toString();
-  return `${fullYear}-${formatMonth}-${formatDay}`;
-};
-
 // ---- Tools ----
 const Tools = {
   registry: {
@@ -118,15 +135,24 @@ const Tools = {
         : cinemaData;
 
       if (!filtered.length) return `Aucun film trouvé pour le genre "${genre}".`;
-
       console.log('filtered : ', filtered);
 
       const lines = filtered.map((item) => {
-        const originalHours = item?.showtimes?.original.map((time) => time?.startsAt).join(', ');
-        const dubbedHours = item?.showtimes?.dubbed.map((time) => time?.startsAt).join(', ');
-        return `• ${item?.movie?.title}\nFR : ${dubbedHours}\nVOST : ${originalHours}`;
+        const title = item?.movie?.title || 'Titre inconnu';
+
+        // FR = priorité au "local" (films FR), sinon "dubbed" pour film doublé
+        const fr = hasTimes(item?.showtimes?.local)
+          ? formatSlots(item.showtimes.local)
+          : hasTimes(item?.showtimes?.dubbed)
+          ? formatSlots(item.showtimes.dubbed)
+          : '—';
+        // VOST = "original"
+        const vost = hasTimes(item?.showtimes?.original) ? formatSlots(item.showtimes.original) : '—';
+
+        return `• ${title}\nFR : ${fr}\nVOST : ${vost}\n`;
       });
-      return `🎬 Horaires ${theaterId} / ${date}\n` + lines.join('\n');
+      const niceDate = formatDate(date);
+      return `🎬 Créteil Soleil • ${niceDate}\n\n` + lines.join('\n');
     },
   },
 
@@ -146,7 +172,7 @@ const Tools = {
 
       const result = await functionTool(...json.args);
       console.log('Result : ', result);
-      return `Resultat de l'outil ${json.tool}(${json.args.join(', ')}) :\n${result}`;
+      return `Resultat de l'outil ${json.tool}(${json.args.join(', ')}) :\n\n${result}`;
     } catch (error) {
       console.log('No tool has been chosen : \n', error);
       return null;
