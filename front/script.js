@@ -1,6 +1,5 @@
 // ---- Config ----
 const API_URL = 'http://127.0.0.1:1234/v1/chat/completions';
-const ALLO_CINE_URL = 'https://www.allocine.fr/_/showtimes/theater-B0132/d-2025-09-16/';
 const SHOWTIMES_URL = 'http://localhost:3001/showtimes';
 const MODEL = 'google/gemma-3n-e4b';
 
@@ -8,19 +7,23 @@ const SYSTEM_LANG = 'Answer user question in french.';
 const TOOLING_PROMPT = `
 You are an assistant who can provide answers or return a JSON string to trigger function if it exist.
 Functions available :
-- addTool(a,b) => a + b; // returns the sums of a and b
-- multiplyTool(a,b) => a * b; // return the product of a and b
 - showtimesTool(theaterId, date, genre) => any  // returns today showtimes JSON
-If you respond in JSON, you MUST format like this : { "tool": "addTool", "args": [1, 1] }
+If you respond in JSON, you MUST format like this : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Aventure"] }
 Sample of request and response :
-Request : "What is 1 + 2?"
-Response : { "tool": "addTool", "args": [1, 2] }
-
-Request : "What is 3 * 4?"
-Response : { "tool": "multiplyTool", "args": [3, 4] }
-
 Request : "Find me an science fiction movie"
 Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Science Fiction"] }
+
+Request : "What action movies are in theater ?"
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Action"] }
+
+Request : "Show me the drama movies on September 18, 2025"
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-18", "Drame"] }
+
+Request : "Are there any comedies in the cinema?"
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Comédie"] }
+
+Request : "Is there a historical film showing this weekend?"
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-20", "Historique"] }
 
 Request : "Capital of France?"
 Response : "Paris"
@@ -61,12 +64,9 @@ const getTodayApiFormat = () => {
 // ---- Tools ----
 const Tools = {
   registry: {
-    addTool: (a, b) => a + b,
-    multiplyTool: (a, b) => a * b,
     showtimesTool: async (theaterId, date, genre) => {
       const cinemaUrl = new URL(SHOWTIMES_URL);
       const todayDate = getTodayApiFormat();
-      console.log('todayDate :', todayDate);
 
       cinemaUrl.searchParams.set('theaterId', 'B0132');
       cinemaUrl.searchParams.set('date', todayDate);
@@ -94,15 +94,15 @@ const Tools = {
       console.log('filtered : ', filtered);
 
       const lines = filtered.map((item) => {
-        const hours = item?.showtimes?.original.map((time) => time?.startsAt).join(', ');
-        return `• ${item?.movie?.title} — ${hours}`;
+        const originalHours = item?.showtimes?.original.map((time) => time?.startsAt).join(', ');
+        const dubbedHours = item?.showtimes?.dubbed.map((time) => time?.startsAt).join(', ');
+        return `• ${item?.movie?.title}\nFR : ${dubbedHours}\nVOST : ${originalHours}`;
       });
       return `🎬 Horaires ${theaterId} / ${date}\n` + lines.join('\n');
     },
   },
 
   tryRun: async (content) => {
-    console.log('content : ', content);
     try {
       const json = JSON.parse(content);
       if (!json || typeof json !== 'object') {
