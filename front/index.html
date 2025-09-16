@@ -9,12 +9,17 @@
   <body>
     <div class="chatbot-container">
       <h1>Chatbot Simple</h1>
-      <div id="messages" class="messages"></div>
+
+      <!-- Zone messages (structure "message-row + avatar + bubble") -->
+      <div id="messages" class="messages" aria-live="polite" aria-busy="false"></div>
+
+      <!-- Barre d'entrée -->
       <form id="chatForm" class="input-row" autocomplete="off">
         <input type="text" id="userInput" placeholder="Écrivez un message..." aria-label="Votre message" />
         <button id="submitButton" type="submit">Envoyer</button>
       </form>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>

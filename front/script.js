@@ -36,12 +36,40 @@ const userInput = document.getElementById('userInput');
 const submitButton = document.getElementById('submitButton');
 
 // ---- UI helpers ----
+const AVATARS = { user: '🧑‍💻', bot: '🤖' };
+
 const UI = {
   appendMessage(sender, text) {
-    const messageNode = document.createElement('div');
-    messageNode.className = `message ${sender}`;
-    messageNode.textContent = text;
-    messages.appendChild(messageNode);
+    // ligne
+    const row = document.createElement('div');
+    row.className = `message-row ${sender}`;
+
+    // avatar
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = AVATARS[sender] ?? '❓';
+
+    // bulle
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    // espaceur (structure 3 colonnes)
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+
+    // ordre gauche/droite selon sender (match le CSS fourni)
+    if (sender === 'bot') {
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      row.appendChild(spacer);
+    } else {
+      row.appendChild(spacer);
+      row.appendChild(bubble);
+      row.appendChild(avatar);
+    }
+
+    messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
   },
   setBusy(busy) {
