@@ -8,22 +8,26 @@ const TOOLING_PROMPT = `
 You are an assistant who can provide answers or return a JSON string to trigger function if it exist.
 Functions available :
 - showtimesTool(theaterId, date, genre) => any  // returns today showtimes JSON
-If you respond in JSON, you MUST format like this : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Aventure"] }
+If you respond in JSON, you MUST format like this : { "tool": "showtimesTool", "args": ["B0132", "2025-10-04", "Aventure"] }
+The args are the 3 parameters of the showtimesTool function.
+TheatreId is the ID of the theatre.
+Date is the date the user wants movie times for, usually today's date.
+Genre is the kind of movie the user wants to see.
 Sample of request and response :
 Request : "Find me an science fiction movie"
 Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Science Fiction"] }
 
 Request : "What action movies are in theater ?"
-Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Action"] }
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-10-06", "Action"] }
 
 Request : "Show me the drama movies on September 18, 2025"
-Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-18", "Drame"] }
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-08-18", "Drame"] }
 
 Request : "Are there any comedies in the cinema?"
-Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-16", "Comédie"] }
+Response : { "tool": "showtimesTool", "args": ["B0132", "2026-03-26", "Comédie"] }
 
 Request : "Is there a historical film showing this weekend?"
-Response : { "tool": "showtimesTool", "args": ["B0132", "2025-09-20", "Historique"] }
+Response : { "tool": "showtimesTool", "args": ["B0132", "2025-12-20", "Historique"] }
 `;
 
 // ---- DOM references ----
